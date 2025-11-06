@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Frontend for personalized travel planner app",
   "private": true,
+  "homepage": "https://yeryun-hwang.github.io/solideo-Day2-01-05-Practice2",
   "dependencies": {
     "axios": "^1.6.2",
     "date-fns": "^2.30.0",
