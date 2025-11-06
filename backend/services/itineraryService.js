@@ -1,33 +1,136 @@
 const googleMapsService = require('./googleMapsService');
+const costCalculator = require('./costCalculator');
 
-// Generate a complete travel itinerary
+// Generate a complete travel itinerary with route options
 exports.generateItinerary = async (origin, destination, departureTime, duration, preferences = {}) => {
   try {
-    const itinerary = {
-      origin,
-      destination,
-      departureTime,
-      duration,
-      days: []
-    };
-
-    // Get main transportation route
-    const mainRoute = await googleMapsService.getDirections(
+    // Get all available routes
+    const allRoutes = await googleMapsService.getDirections(
       origin,
       destination,
       departureTime,
       'transit'
     );
 
-    itinerary.mainTransportation = mainRoute[0]; // Best route
+    // Analyze routes for cost and duration
+    const routeAnalysis = costCalculator.analyzeRoutes(allRoutes);
+
+    if (!routeAnalysis) {
+      throw new Error('No routes available');
+    }
+
+    // Create itineraries for both cheapest and fastest routes
+    const cheapestItinerary = await this.createFullItinerary(
+      origin,
+      destination,
+      departureTime,
+      duration,
+      preferences,
+      routeAnalysis.cheapestRoute,
+      'cheapest'
+    );
+
+    const fastestItinerary = await this.createFullItinerary(
+      origin,
+      destination,
+      departureTime,
+      duration,
+      preferences,
+      routeAnalysis.fastestRoute,
+      'fastest'
+    );
+
+    const bestValueItinerary = await this.createFullItinerary(
+      origin,
+      destination,
+      departureTime,
+      duration,
+      preferences,
+      routeAnalysis.bestValueRoute,
+      'bestValue'
+    );
+
+    // Calculate savings
+    const savings = costCalculator.calculateSavings(
+      routeAnalysis.fastestRoute,
+      routeAnalysis.cheapestRoute
+    );
+
+    return {
+      routeOptions: {
+        cheapest: {
+          ...cheapestItinerary,
+          label: '최저 비용',
+          description: '가장 저렴한 교통비로 이동',
+          cost: routeAnalysis.cheapestRoute.cost,
+          costFormatted: costCalculator.formatCost(routeAnalysis.cheapestRoute.cost),
+          duration: routeAnalysis.cheapestRoute.durationMinutes,
+          transfers: routeAnalysis.cheapestRoute.transfers
+        },
+        fastest: {
+          ...fastestItinerary,
+          label: '최단 시간',
+          description: '가장 빠르게 도착',
+          cost: routeAnalysis.fastestRoute.cost,
+          costFormatted: costCalculator.formatCost(routeAnalysis.fastestRoute.cost),
+          duration: routeAnalysis.fastestRoute.durationMinutes,
+          transfers: routeAnalysis.fastestRoute.transfers
+        },
+        bestValue: {
+          ...bestValueItinerary,
+          label: '최고 가성비',
+          description: '시간 대비 가장 합리적인 비용',
+          cost: routeAnalysis.bestValueRoute.cost,
+          costFormatted: costCalculator.formatCost(routeAnalysis.bestValueRoute.cost),
+          duration: routeAnalysis.bestValueRoute.durationMinutes,
+          transfers: routeAnalysis.bestValueRoute.transfers
+        }
+      },
+      comparison: {
+        savings: {
+          amount: savings.amount,
+          percentage: savings.percentage,
+          formatted: savings.formatted
+        },
+        timeDifference: routeAnalysis.fastestRoute.durationMinutes - routeAnalysis.cheapestRoute.durationMinutes,
+        allRoutes: routeAnalysis.allRoutes.map(r => ({
+          cost: r.cost,
+          costFormatted: costCalculator.formatCost(r.cost),
+          duration: r.durationMinutes,
+          distance: r.distanceKm,
+          transfers: r.transfers
+        }))
+      },
+      recommendations: routeAnalysis.recommendations
+    };
+  } catch (error) {
+    console.error('Error generating itinerary:', error);
+    throw error;
+  }
+};
+
+// Create a full itinerary for a specific route
+exports.createFullItinerary = async (origin, destination, departureTime, duration, preferences, routeData, type) => {
+  try {
+    const itinerary = {
+      origin,
+      destination,
+      departureTime,
+      duration,
+      type,
+      days: []
+    };
+
+    const route = routeData.route;
+    itinerary.mainTransportation = route;
 
     // Calculate arrival time and trip duration
-    const tripDuration = mainRoute[0].legs[0].duration.value;
+    const tripDuration = route.legs[0].duration.value;
     const arrivalTime = new Date(new Date(departureTime).getTime() + tripDuration * 1000);
 
     // Extract destination coordinates
-    const destLat = mainRoute[0].legs[0].end_location.lat;
-    const destLng = mainRoute[0].legs[0].end_location.lng;
+    const destLat = route.legs[0].end_location.lat;
+    const destLng = route.legs[0].end_location.lng;
     const destLocation = `${destLat},${destLng}`;
 
     // Generate daily itinerary for the duration of the trip
@@ -44,18 +147,31 @@ exports.generateItinerary = async (origin, destination, departureTime, duration,
 
     // Add return transportation
     const returnDate = new Date(arrivalTime.getTime() + durationDays * 24 * 60 * 60 * 1000);
-    const returnRoute = await googleMapsService.getDirections(
+    const returnRoutes = await googleMapsService.getDirections(
       destination,
       origin,
       returnDate.toISOString(),
       'transit'
     );
 
-    itinerary.returnTransportation = returnRoute[0];
+    const returnAnalysis = costCalculator.analyzeRoutes(returnRoutes);
+
+    // Use same type of route for return (cheapest with cheapest, fastest with fastest)
+    let returnRoute;
+    if (type === 'cheapest') {
+      returnRoute = returnAnalysis.cheapestRoute.route;
+    } else if (type === 'fastest') {
+      returnRoute = returnAnalysis.fastestRoute.route;
+    } else {
+      returnRoute = returnAnalysis.bestValueRoute.route;
+    }
+
+    itinerary.returnTransportation = returnRoute;
+    itinerary.returnCost = costCalculator.calculateRouteCost(returnRoute);
 
     return itinerary;
   } catch (error) {
-    console.error('Error generating itinerary:', error);
+    console.error('Error creating full itinerary:', error);
     throw error;
   }
 };

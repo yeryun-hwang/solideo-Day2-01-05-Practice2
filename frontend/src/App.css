@@ -138,3 +138,135 @@
     top: 0;
   }
 }
+
+/* Route Selection Styles */
+.route-selection-container {
+  width: 100%;
+  max-width: 1400px;
+}
+
+.route-action-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.route-action-buttons .back-button,
+.route-action-buttons .confirm-button {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.route-action-buttons .back-button {
+  background-color: #6c757d;
+  color: white;
+  flex: 1;
+}
+
+.route-action-buttons .back-button:hover {
+  background-color: #5a6268;
+}
+
+.route-action-buttons .confirm-button {
+  background-color: #667eea;
+  color: white;
+  flex: 2;
+}
+
+.route-action-buttons .confirm-button:hover {
+  background-color: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Selected Route Banner */
+.selected-route-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+}
+
+.banner-icon {
+  font-size: 3rem;
+  flex-shrink: 0;
+}
+
+.banner-content {
+  flex: 1;
+}
+
+.banner-content h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+}
+
+.banner-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1.05rem;
+  opacity: 0.95;
+}
+
+.banner-stats span {
+  white-space: nowrap;
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.change-route-button {
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.change-route-button:hover {
+  background-color: #7c3aed;
+}
+
+@media (max-width: 768px) {
+  .route-action-buttons {
+    flex-direction: column;
+  }
+
+  .selected-route-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .banner-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .change-route-button,
+  .reset-button {
+    width: 100%;
+  }
+}
