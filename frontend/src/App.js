@@ -4,7 +4,7 @@ import TravelForm from './components/TravelForm';
 import PreferencesForm from './components/PreferencesForm';
 import RouteComparison from './components/RouteComparison';
 import ItineraryDisplay from './components/ItineraryDisplay';
-import MapDisplay from './components/MapDisplay';
+import MapDisplayLeaflet from './components/MapDisplayLeaflet';
 
 function App() {
   const [step, setStep] = useState(1);
@@ -153,7 +153,7 @@ function App() {
                 <ItineraryDisplay itinerary={routeOptions.routeOptions[selectedRoute]} />
               </div>
               <div className="map-section">
-                <MapDisplay itinerary={routeOptions.routeOptions[selectedRoute]} />
+                <MapDisplayLeaflet itinerary={routeOptions.routeOptions[selectedRoute]} />
               </div>
             </div>
           </div>

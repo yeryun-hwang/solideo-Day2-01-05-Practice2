@@ -1,15 +1,14 @@
-const googleMapsService = require('./googleMapsService');
+const openStreetMapService = require('./openStreetMapService');
 const costCalculator = require('./costCalculator');
 
 // Generate a complete travel itinerary with route options
 exports.generateItinerary = async (origin, destination, departureTime, duration, preferences = {}) => {
   try {
     // Get all available routes
-    const allRoutes = await googleMapsService.getDirections(
+    const allRoutes = await openStreetMapService.getDirections(
       origin,
       destination,
-      departureTime,
-      'transit'
+      true // alternatives
     );
 
     // Analyze routes for cost and duration
@@ -147,11 +146,10 @@ exports.createFullItinerary = async (origin, destination, departureTime, duratio
 
     // Add return transportation
     const returnDate = new Date(arrivalTime.getTime() + durationDays * 24 * 60 * 60 * 1000);
-    const returnRoutes = await googleMapsService.getDirections(
+    const returnRoutes = await openStreetMapService.getDirections(
       destination,
       origin,
-      returnDate.toISOString(),
-      'transit'
+      true // alternatives
     );
 
     const returnAnalysis = costCalculator.analyzeRoutes(returnRoutes);
@@ -187,7 +185,7 @@ exports.generateDayItinerary = async (location, dayNumber, preferences, baseDate
 
     // Morning: Tourist attractions
     if (!preferences.skipAttractions) {
-      const attractions = await googleMapsService.getPlaces(
+      const attractions = await openStreetMapService.getPlaces(
         location,
         5000,
         'tourist_attraction',
@@ -224,7 +222,7 @@ exports.generateDayItinerary = async (location, dayNumber, preferences, baseDate
     }
 
     // Lunch: Restaurants
-    const restaurants = await googleMapsService.getPlaces(
+    const restaurants = await openStreetMapService.getPlaces(
       location,
       3000,
       'restaurant',
@@ -251,7 +249,7 @@ exports.generateDayItinerary = async (location, dayNumber, preferences, baseDate
     // Afternoon: More attractions or shopping
     if (!preferences.skipAttractions) {
       const afternoonType = preferences.includeShopping ? 'shopping_mall' : 'tourist_attraction';
-      const afternoonPlaces = await googleMapsService.getPlaces(
+      const afternoonPlaces = await openStreetMapService.getPlaces(
         location,
         5000,
         afternoonType,
@@ -291,7 +289,7 @@ exports.generateDayItinerary = async (location, dayNumber, preferences, baseDate
 
     // Evening: Cafes or bars
     if (preferences.includeNightlife) {
-      const nightPlaces = await googleMapsService.getPlaces(
+      const nightPlaces = await openStreetMapService.getPlaces(
         location,
         3000,
         'night_club',
