@@ -6,6 +6,11 @@ import RouteComparison from './components/RouteComparison';
 import ItineraryDisplay from './components/ItineraryDisplay';
 import MapDisplayLeaflet from './components/MapDisplayLeaflet';
 
+// 🔧 백엔드 API URL 설정
+// 배포 후 여기를 Render.com URL로 변경하세요!
+// 예: const API_URL = 'https://travel-planner-backend.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL || '';
+
 function App() {
   const [step, setStep] = useState(1);
   const [travelData, setTravelData] = useState(null);
@@ -24,7 +29,7 @@ function App() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/travel/itinerary', {
+      const response = await fetch(`${API_URL}/api/travel/itinerary`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -38,6 +43,10 @@ function App() {
         }),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const result = await response.json();
 
       if (result.success) {
@@ -48,7 +57,25 @@ function App() {
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('여행 일정 생성 중 오류가 발생했습니다.');
+
+      // 더 상세한 에러 메시지
+      let errorMessage = '❌ 여행 일정 생성 중 오류가 발생했습니다.\n\n';
+
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage += '🔌 백엔드 서버에 연결할 수 없습니다.\n\n';
+        errorMessage += '📝 해결 방법:\n';
+        errorMessage += '1. 백엔드를 Render.com에 배포하세요\n';
+        errorMessage += '2. BACKEND_DEPLOY.md 파일을 참고하세요\n';
+        errorMessage += '3. 배포 완료 후 frontend/src/App.js의 API_URL을 수정하세요';
+      } else if (error.message.includes('HTTP error')) {
+        errorMessage += `⚠️ 서버 오류: ${error.message}\n\n`;
+        errorMessage += 'Render.com에서 백엔드가 정상 작동 중인지 확인하세요.\n';
+        errorMessage += '첫 요청은 30초 정도 걸릴 수 있습니다 (콜드 스타트)';
+      } else {
+        errorMessage += error.message;
+      }
+
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
